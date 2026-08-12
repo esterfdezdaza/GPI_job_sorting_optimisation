@@ -47,6 +47,8 @@ def real_speed(finaltime, qty):
     """
     return round(qty / finaltime)
 
+import pandas as pd
+
 def clean_value(value):
     # Handle NaN/empty values
     if pd.isna(value):
@@ -63,6 +65,9 @@ def clean_value(value):
 
     if value == "":
         return None
+
+    # Remove thousand separators
+    value = value.replace(",", "")
 
     try:
         number = float(value)
