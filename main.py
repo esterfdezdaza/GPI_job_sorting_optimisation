@@ -6,9 +6,24 @@ df = pd.read_csv("data_various_machines.csv", skiprows=5)
 # Run
 data = get_data_from_csv(df)
 
-print(data)
+ranking = analyse_data(data)
 
-data.to_csv(
-    "best_machine_by_die.csv",
-    index=False
-)
+print(ranking)
+
+
+rows = []
+
+for die, machines in ranking.items():
+
+    row = {"Die": die}
+
+    for i, machine in enumerate(machines, start=1):
+        row[f"Machine {i}"] = machine
+
+    rows.append(row)
+
+df = pd.DataFrame(rows)
+
+df.to_csv("machine_ranking.csv", index=False)
+
+

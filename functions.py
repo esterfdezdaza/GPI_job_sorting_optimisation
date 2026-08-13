@@ -110,6 +110,11 @@ def get_data_from_csv(df):
                 
                 # If that value is the die number and the following value is None
                 if (value == current_die) & (clean_value(df.iloc[row, 2]) == None):
+                    # First we should check if that machine is already saved
+                    for idx, record in enumerate(dies[current_die]):
+                        if record[0] == current_machine:
+                            #If it is saved we delete the value and store the new/last one
+                            dies[current_die].pop(idx)    
                     # We save the machine those values are for
                     avrg_data.append(current_machine)
 
@@ -159,3 +164,76 @@ def get_data_from_csv(df):
     return dies
 
 
+def hours_to_hm(decimal_hours):
+    """
+    Converts decimal hours into hours and minutes.
+
+    Example:
+    1.75 -> "1h 45m"
+    """
+    hours = int(decimal_hours)
+    minutes = round((decimal_hours - hours) * 60)
+
+    return f"{hours}h {minutes}m"
+
+
+def analyse_data(data):
+
+    # Standard quantity used to compare all machines
+    REF_QTY = 10000
+
+    ranking = {}
+
+    for die, records in data.items():
+
+        # Ignore records with no valid speed
+        valid_records = [
+            record for record in records
+            if record[-1] > 0
+        ]
+
+        if not valid_records:
+            ranking[die] = ["No valid speed data"]
+            continue
+
+        # Sort from fastest to slowest
+        sorted_records = sorted(
+            valid_records,
+            key=lambda record: record[-1],
+            reverse=True
+        )
+
+        result = []
+
+        # Fastest machine and its speed
+        fastest_machine = sorted_records[0][0]
+        fastest_speed = sorted_records[0][-1]
+
+        # Time needed by fastest machine to produce 10,000 cartons
+        fastest_time = REF_QTY / fastest_speed
+
+        for record in sorted_records:
+
+            machine = record[0]
+            speed = record[-1]
+
+            # First machine is the benchmark
+            if machine == fastest_machine:
+                result.append(
+                    f"{machine} ({speed}) - fastest"
+                )
+                continue
+
+            # Time needed by this machine to produce 10,000 cartons
+            machine_time = REF_QTY / speed
+
+            # Extra time compared to the fastest machine
+            extra_time = machine_time - fastest_time
+
+            result.append(
+                f"{machine} ({speed}) - +{hours_to_hm(extra_time)} vs fastest per 10,000 sheets"
+            )
+
+        ranking[die] = result
+
+    return ranking
