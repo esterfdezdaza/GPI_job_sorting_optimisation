@@ -43,7 +43,6 @@ def analyse_file(df):
         
 
         else:
-            print("I am here")
             current_die = die
 
             dies[current_die] = []
