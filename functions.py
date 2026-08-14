@@ -96,6 +96,9 @@ def get_data_from_csv(df):
     for row in range(len(df)):
         # Save the first die
         die = clean_value(df.iloc[row, 0])
+
+        if die is None or die == "":
+            continue
         current_machine = df.iloc[row-1, 1]
 
         # If we are still talking about the same die
@@ -185,7 +188,6 @@ def analyse_data(data):
     ranking = {}
 
     for die, records in data.items():
-
         # Ignore records with no valid speed
         valid_records = [
             record for record in records
@@ -231,9 +233,39 @@ def analyse_data(data):
             extra_time = machine_time - fastest_time
 
             result.append(
-                f"{machine} ({speed}) - +{hours_to_hm(extra_time)} vs fastest per 10,000 sheets"
+                f"{machine} ({speed}) - +{hours_to_hm(extra_time)}"
             )
 
         ranking[die] = result
 
     return ranking
+
+def validate_avante_file(df):
+
+    errors = []
+
+    # Check the file has data
+    if df.empty:
+        errors.append("File is empty.")
+
+    # Check first column exists
+    if df.shape[1] < 1:
+        errors.append("No die column found.")
+
+    # Check first 20 rows for at least one die number
+    die_found = False
+
+    for row in range(min(20, len(df))):
+
+        value = clean_value(df.iloc[row, 0])
+
+        if isinstance(value, (int, float)):
+            die_found = True
+            break
+
+    if not die_found:
+        errors.append(
+            "No die numbers found in the first column. Check skiprows value."
+        )
+
+    return errors
