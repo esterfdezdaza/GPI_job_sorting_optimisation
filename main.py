@@ -3,7 +3,22 @@ from functions import *
 from testing import *
 import tkinter as tk
 from tkinter import messagebox, filedialog
+import ctypes
+import sys
 
+# Avoid having more than one file open at the same time
+mutex = ctypes.windll.kernel32.CreateMutexW(
+    None,
+    False,
+    "MachineRankingToolMutex"
+)
+
+if ctypes.GetLastError() == 183:
+    messagebox.showinfo(
+        "Already Running",
+        "Machine Ranking Tool is already open."
+    )
+    sys.exit()
 
 root = tk.Tk()
 root.withdraw()  # Hide the main window
@@ -79,7 +94,7 @@ try:
     
             # Stop the program if validation fails
             messagebox.showinfo("Select AVANTE Data File", """Wrong File Format""")
-            file_path = select_csv_file()
+            raise SystemExit()
 
         # Tests the programm is working correctly
         run_all_tests()
