@@ -1,40 +1,88 @@
 import pandas as pd
 from functions import *
+from testing import *
+import tkinter as tk
+from tkinter import messagebox, filedialog
+
+
+root = tk.Tk()
+root.withdraw()  # Hide the main window
+
+messagebox.showinfo(
+    "AVANTE File Requirements",
+    """
+========================================================
+        MACHINE RANKING ANALYSIS TOOL
+========================================================
+
+Before running the program, ensure the AVANTE export:
+
+1. Is saved as a CSV file.
+2. Has the first 5 report rows intact
+   (the program automatically skips them).
+3. Contains the following columns in this order:
+
+   Column A : Die Number
+   Column B : Machine
+   Column C : Works Order / Job Number
+   Column D : Total Quantity
+   Column E : Total Hours
+   Column F : Average Speed (Cartons per Hour)
+
+Example:
+
+--------------------------------------------------------
+| Die    | Machine | Job No | Qty | Hours | Speed      |
+--------------------------------------------------------
+| 76537  | DIANA   | 12345  | ... | ...   | 16923      |
+|         DIANA Average Values                         |
+--------------------------------------------------------
+
+Press OK to choose the data file.
+
+""")
 
 try:
     # Read the AVANTE export file
     # Skip the first 5 rows because they contain report information,
     # not actual production data
+
+
+    # Ask the user to select a CSV file
+    file_path = select_csv_file()
+
+    # User pressed Cancel
+    if not file_path:
+        messagebox.showinfo("Select AVANTE Data File", """No file has been selected""")
+        raise SystemExit()
+        
     try:
+        # First checks that we can access the file
         df = pd.read_csv(
-            "data_various_machines.csv",
+            file_path,
             skiprows=5,
             encoding="cp1252"
         )
 
+        # Then checks that the AVANTE imported file contains the correct format
+        errors = validate_avante_file(df)
+    
+        # Validate that the file structure matches the expected
+        if errors:
+    
+            print("\nAVANTE FILE VALIDATION FAILED\n")
+    
+            # Display all validation errors found
+            for error in errors:
+                print(f"- {error}")
+    
+            # Stop the program if validation fails
+            messagebox.showinfo("Select AVANTE Data File", """Wrong File Format""")
+            file_path = select_csv_file()
+
     # Handle file encoding issues
     except UnicodeDecodeError:
-        print(
-            "ERROR: The file encoding is not supported. "
-            "Please export the file again from AVANTE."
-        )
-        raise SystemExit()
-
-    # Validating formatting errors
-    errors = validate_avante_file(df)
-
-    # Validate that the file structure matches the expected
-    21
-    # AVANTE report format before performing any analysis
-    if errors:
-
-        print("\nAVANTE FILE VALIDATION FAILED\n")
-
-        # Display all validation errors found
-        for error in errors:
-            print(f"- {error}")
-
-        # Stop the program if validation fails
+        messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
         raise SystemExit()
 
     print("AVANTE file validation passed.")
@@ -76,6 +124,10 @@ try:
     # Extra time values are calculated against the
     # fastest machine for a standard run of 10,000 sheets
 
+    # Check if the output file can be written or it is open
+    if not check_output_file("machine_ranking.csv"):
+        raise SystemExit()
+
     with open("machine_ranking.csv", "w", newline="", encoding="utf-8") as f:
 
         # Add explanatory note at the top of the file
@@ -83,6 +135,32 @@ try:
 
         # Write the actual results
         df.to_csv(f, index=False)
+
+    # Ask user where to save the results
+    output_file = filedialog.asksaveasfilename(
+        title="Save Machine Ranking Report",
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv")],
+        initialfile="machine_ranking.csv"
+    )
+
+    # User clicked Cancel
+    if not output_file:
+        raise SystemExit("No output file selected.")
+
+    # Write the file
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
+        f.write(
+            '"Note: Extra time is compared against the fastest machine for 10,000 sheets."\n'
+        )
+        df.to_csv(f, index=False)
+
+    # Confirmation popup
+    messagebox.showinfo(
+        "Success",
+        f"Analysis completed successfully.\n\nFile saved to:\n{output_file}"
+    )
+
 
 except Exception as e:
     print(f"Unexpected error: {e}")

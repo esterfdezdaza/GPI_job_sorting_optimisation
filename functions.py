@@ -1,4 +1,7 @@
 import pandas as pd
+from testing import *
+import tkinter as tk
+from tkinter import messagebox, filedialog
 
 mr_machines = [("HS2", 47), ("HS3", 46), ("Pick&Place", 58), ("115D", 50), 
               ("Diana", 57), ("110WP", 23), ("INT", 19), ("75", 23), ("110", 50), 
@@ -46,8 +49,6 @@ def real_speed(finaltime, qty):
         int: the speed it took the machine runnig that amount of sheets
     """
     return round(qty / finaltime)
-
-import pandas as pd
 
 def clean_value(value):
     # Handle NaN/empty values
@@ -252,6 +253,12 @@ def validate_avante_file(df):
     if df.shape[1] < 1:
         errors.append("No die column found.")
 
+    
+    # Check that the AVANTE export contains enough columns
+    if df.shape[1] < 11:
+        errors.append("Not the correct format.")
+        print("\nERROR: Tried to import a file with less columns than are expected")
+
     # Check first 20 rows for at least one die number
     die_found = False
 
@@ -269,3 +276,12 @@ def validate_avante_file(df):
         )
 
     return errors
+
+def select_csv_file():
+
+    # Ask the user to select a CSV file
+    file_path = filedialog.askopenfilename(
+        title="Select AVANTE Data File",
+        filetypes=[("CSV files", "*.csv")]
+    )
+    return file_path
