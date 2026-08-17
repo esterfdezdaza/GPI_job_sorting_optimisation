@@ -8,6 +8,9 @@ from tkinter import messagebox, filedialog
 root = tk.Tk()
 root.withdraw()  # Hide the main window
 
+# Keep dialogs on top
+root.attributes("-topmost", True)
+
 messagebox.showinfo(
     "AVANTE File Requirements",
     """
@@ -42,12 +45,10 @@ Press OK to choose the data file.
 
 """)
 
+    # -------------------------------------------
+    # Imports CSV File
+    # -------------------------------------------
 try:
-    # Read the AVANTE export file
-    # Skip the first 5 rows because they contain report information,
-    # not actual production data
-
-
     # Ask the user to select a CSV file
     file_path = select_csv_file()
 
@@ -60,7 +61,7 @@ try:
         # First checks that we can access the file
         df = pd.read_csv(
             file_path,
-            skiprows=5,
+            skiprows=5,   # Skip the first 5 rows because they contain report information, not actual production data
             encoding="cp1252"
         )
 
@@ -80,6 +81,9 @@ try:
             messagebox.showinfo("Select AVANTE Data File", """Wrong File Format""")
             file_path = select_csv_file()
 
+        # Tests the programm is working correctly
+        run_all_tests()
+
     # Handle file encoding issues
     except UnicodeDecodeError:
         messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
@@ -90,8 +94,6 @@ try:
     # Extract production data from the raw AVANTE export
     # and organise it by die and machine
     data = get_data_from_csv(df)
-
-
     ranking = analyse_data(data)
 
     # Print ranking results to the console for debugging
@@ -119,15 +121,15 @@ try:
     # Convert the list into a DataFrame
     df = pd.DataFrame(rows)
 
-    #Export results to CSV
-    # Note:
-    # Extra time values are calculated against the
-    # fastest machine for a standard run of 10,000 sheets
+    # -------------------------------------------
+    # Exports CSV File
+    # -------------------------------------------
 
-    # Check if the output file can be written or it is open
+    # Check if the output file can be accessed or it is open
     if not check_output_file("machine_ranking.csv"):
         raise SystemExit()
 
+    # Writing the file
     with open("machine_ranking.csv", "w", newline="", encoding="utf-8") as f:
 
         # Add explanatory note at the top of the file
@@ -144,16 +146,9 @@ try:
         initialfile="machine_ranking.csv"
     )
 
-    # User clicked Cancel
+    # If user has clicked Cancel
     if not output_file:
-        raise SystemExit("No output file selected.")
-
-    # Write the file
-    with open(output_file, "w", newline="", encoding="utf-8") as f:
-        f.write(
-            '"Note: Extra time is compared against the fastest machine for 10,000 sheets."\n'
-        )
-        df.to_csv(f, index=False)
+        raise SystemExit("No output location selected to store the file")
 
     # Confirmation popup
     messagebox.showinfo(
@@ -161,6 +156,6 @@ try:
         f"Analysis completed successfully.\n\nFile saved to:\n{output_file}"
     )
 
-
 except Exception as e:
-    print(f"Unexpected error: {e}")
+    messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
+    raise SystemExit()

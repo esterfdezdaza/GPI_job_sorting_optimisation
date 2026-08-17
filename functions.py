@@ -1,5 +1,4 @@
 import pandas as pd
-from testing import *
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
@@ -51,6 +50,14 @@ def real_speed(finaltime, qty):
     return round(qty / finaltime)
 
 def clean_value(value):
+    """_summary_
+
+    Args:
+        value (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Handle NaN/empty values
     if pd.isna(value):
         return None
@@ -82,6 +89,14 @@ def clean_value(value):
         return value
 
 def get_data_from_csv(df):
+    """_summary_
+
+    Args:
+        df (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Dictionary to store all data grouped by die
     dies = {}
 
@@ -182,7 +197,14 @@ def hours_to_hm(decimal_hours):
 
 
 def analyse_data(data):
+    """_summary_
 
+    Args:
+        data (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Standard quantity used to compare all machines
     REF_QTY = 10000
 
@@ -242,7 +264,14 @@ def analyse_data(data):
     return ranking
 
 def validate_avante_file(df):
+    """_summary_
 
+    Args:
+        df (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     errors = []
 
     # Check the file has data
@@ -278,7 +307,11 @@ def validate_avante_file(df):
     return errors
 
 def select_csv_file():
+    """_summary_
 
+    Returns:
+        _type_: _description_
+    """
     # Ask the user to select a CSV file
     file_path = filedialog.askopenfilename(
         title="Select AVANTE Data File",
