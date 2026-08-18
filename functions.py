@@ -51,13 +51,24 @@ def real_speed(finaltime, qty):
     return round(qty / finaltime)
 
 def clean_value(value):
-    """_summary_
+    """
+    Cleans and standardizes a value extracted from the source CSV file.
+
+    The function converts numeric strings to integers or floats, removes
+    thousand separators, handles empty or missing values, and preserves
+    non-numeric text values.
 
     Args:
-        value (_type_): _description_
+        value (Any):
+            Value read from the dataframe cell. Can be a number, string,
+            empty value, or NaN.
 
     Returns:
-        _type_: _description_
+        int | float | str | None:
+            - int for whole numbers.
+            - float for decimal numbers.
+            - str for non-numeric text values.
+            - None for empty or missing values.
     """
     # Handle NaN/empty values
     if pd.isna(value):
@@ -90,13 +101,25 @@ def clean_value(value):
         return value
 
 def get_data_from_csv(df):
-    """_summary_
+    """
+    Extracts machine performance data from an AVANTE export dataframe and
+    organizes it by die number.
+
+    The function processes the raw CSV structure, identifies die records,
+    groups machine performance data under each die, and stores the latest
+    available values for each machine.
 
     Args:
-        df (_type_): _description_
+        df (pandas.DataFrame):
+            Raw dataframe imported from the AVANTE CSV file.
 
     Returns:
-        _type_: _description_
+        dict[int, list[list]]:
+            Dictionary where:
+            - The key is a die number.
+            - The value is a list of machine records.
+            - Each machine record contains the machine name followed by
+              its associated performance metrics.
     """
     # Dictionary to store all data grouped by die
     dies = {}
@@ -186,10 +209,19 @@ def get_data_from_csv(df):
 
 def hours_to_hm(decimal_hours):
     """
-    Converts decimal hours into hours and minutes.
+    Converts a decimal hour value into a human-readable hours and minutes
+    format.
 
     Example:
-    1.75 -> "1h 45m"
+        1.75 -> "1h 45m"
+
+    Args:
+        decimal_hours (float):
+            Time expressed in decimal hours.
+
+    Returns:
+        str:
+            Formatted string showing hours and minutes.
     """
     hours = int(decimal_hours)
     minutes = round((decimal_hours - hours) * 60)
@@ -198,13 +230,25 @@ def hours_to_hm(decimal_hours):
 
 
 def analyse_data(data):
-    """_summary_
+    """
+    Analyses machine performance data and generates a ranking for each die.
+
+    Machines are ranked according to their production speed. The fastest
+    machine is used as the benchmark, and all other machines show the
+    additional time required to produce 10,000 cartons compared with the
+    fastest machine.
 
     Args:
-        data (_type_): _description_
+        data (dict):
+            Dictionary containing die numbers and their associated machine
+            performance records.
 
     Returns:
-        _type_: _description_
+        dict[int, list[str]]:
+            Dictionary where:
+            - The key is a die number.
+            - The value is a list of ranking strings sorted from fastest
+              to slowest machine.
     """
     # Standard quantity used to compare all machines
     REF_QTY = 10000
@@ -265,13 +309,24 @@ def analyse_data(data):
     return ranking
 
 def validate_avante_file(df):
-    """_summary_
+    """
+    Validates that an imported dataframe matches the expected AVANTE
+    export format.
+
+    The validation checks:
+    - Whether the file is empty.
+    - Whether the required columns exist.
+    - Whether the expected number of columns is present.
+    - Whether die numbers are found in the first column.
 
     Args:
-        df (_type_): _description_
+        df (pandas.DataFrame):
+            Dataframe loaded from the selected CSV file.
 
     Returns:
-        _type_: _description_
+        list[str]:
+            List of validation error messages. An empty list indicates
+            that the file passed all validation checks.
     """
     errors = []
 
@@ -308,10 +363,20 @@ def validate_avante_file(df):
     return errors
 
 def select_csv_file():
-    """_summary_
+    """
+    Opens a file selection dialog and allows the user to choose an AVANTE
+    CSV export file.
+
+    If no file is selected, the user is notified and the application
+    exits.
 
     Returns:
-        _type_: _description_
+        str:
+            Full path of the selected CSV file.
+
+    Raises:
+        SystemExit:
+            Raised when the user cancels the file selection dialog.
     """
     # Ask the user to select a CSV file
     file_path = filedialog.askopenfilename(
@@ -326,11 +391,19 @@ def select_csv_file():
     return file_path
 
 def show_menu(ranking, output_df):
-    """_summary_
+    """Creates and displays the main graphical user interface for the Machine Ranking Tool.
+    The menu allows users to:
+    - Search for a die number and view its machine rankings.
+    - Export the machine ranking report as a CSV file.
+    - Exit the application.
 
     Args:
-        ranking (_type_): _description_
-        output_df (_type_): _description_
+        ranking (dict[int, list[str]]):
+            Dictionary mapping each die number to a list of ranked machine
+            recommendations and related information.
+        output_df (pandas.DataFrame):
+            DataFrame containing the machine ranking results that can be
+            exported to a CSV report.
     """
 
     root = tk.Tk()
@@ -340,7 +413,14 @@ def show_menu(ranking, output_df):
     root.resizable(False, False)
 
     def search_die():
-
+        """Prompts the user to enter a die number and displays the corresponding
+        machine ranking information.
+        
+        The function validates user input, searches for the die number in the
+        ranking dictionary, and shows the results in a message box. If the die
+        number is not found or the input is invalid, an appropriate warning or
+        error message is displayed.
+        """
         while True:
 
             die = simpledialog.askstring(
@@ -378,7 +458,14 @@ def show_menu(ranking, output_df):
                 )
 
     def save_csv():
-
+        """Prompts the user to enter a die number and displays the corresponding
+        machine ranking information.
+       
+        The function validates user input, searches for the die number in the
+        ranking dictionary, and shows the results in a message box. If the die
+        number is not found or the input is invalid, an appropriate warning or
+        error message is displayed.
+        """
         output_file = filedialog.asksaveasfilename(
             title="Save Ranking Report",
             defaultextension=".csv",
@@ -419,6 +506,10 @@ def show_menu(ranking, output_df):
                 "Please close the file and try again."
             )
     def close_program():
+        """Closes the application and terminates the Python process.
+        Destroys the main Tkinter window and forces the program to exit,
+        ensuring that no background Tkinter processes remain running.
+        """
         root.destroy()
         os._exit(0)
 

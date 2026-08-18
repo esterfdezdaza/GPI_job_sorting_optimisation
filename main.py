@@ -74,7 +74,7 @@ try:
     file_path = select_csv_file()
         
     try:
-        # First checks that we can access the file
+        # First checks that we can access the file 
         df = pd.read_csv(
             file_path,
             skiprows=5,   # Skip the first 5 rows because they contain report information, not actual production data
@@ -84,7 +84,7 @@ try:
         # Then checks that the AVANTE imported file contains the correct format
         errors = validate_avante_file(df)
     
-        # Validate that the file structure matches the expected
+        # Validate that the file matches the expected structure
         if errors:
     
             print("\nAVANTE FILE VALIDATION FAILED\n")
@@ -99,13 +99,13 @@ try:
 
         # Tests the programm is working correctly
         run_all_tests()
+        print("AVANTE file validation passed.")
 
     # Handle file encoding issues
     except UnicodeDecodeError:
         messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
         raise SystemExit()
 
-    print("AVANTE file validation passed.")
 
     # Extract production data from the raw AVANTE export
     # and organise it by die and machine
