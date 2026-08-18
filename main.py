@@ -2,7 +2,7 @@ import pandas as pd
 from functions import *
 from testing import *
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, simpledialog
 import ctypes
 import sys
 
@@ -12,6 +12,8 @@ mutex = ctypes.windll.kernel32.CreateMutexW(
     False,
     "MachineRankingToolMutex"
 )
+
+print("LastError:", ctypes.GetLastError())
 
 if ctypes.GetLastError() == 183:
     messagebox.showinfo(
@@ -26,8 +28,8 @@ root.withdraw()  # Hide the main window
 # Keep dialogs on top
 root.attributes("-topmost", True)
 
-messagebox.showinfo(
-    "AVANTE File Requirements",
+accepted = messagebox.askokcancel(
+    "AVANTE File Requirements", 
     """
 ========================================================
         MACHINE RANKING ANALYSIS TOOL
@@ -60,17 +62,16 @@ Press OK to choose the data file.
 
 """)
 
-    # -------------------------------------------
-    # Imports CSV File
-    # -------------------------------------------
+# User clicked Cancel or X
+if not accepted:
+    raise SystemExit()
+
+# -------------------------------------------
+# Imports CSV File
+# -------------------------------------------
 try:
     # Ask the user to select a CSV file
     file_path = select_csv_file()
-
-    # User pressed Cancel
-    if not file_path:
-        messagebox.showinfo("Select AVANTE Data File", """No file has been selected""")
-        raise SystemExit()
         
     try:
         # First checks that we can access the file
@@ -140,36 +141,8 @@ try:
     # Exports CSV File
     # -------------------------------------------
 
-    # Check if the output file can be accessed or it is open
-    if not check_output_file("machine_ranking.csv"):
-        raise SystemExit()
-
-    # Writing the file
-    with open("machine_ranking.csv", "w", newline="", encoding="utf-8") as f:
-
-        # Add explanatory note at the top of the file
-        f.write('"Note: Extra time is compared against the fastest machine for 10,000 sheets."\n')
-
-        # Write the actual results
-        df.to_csv(f, index=False)
-
-    # Ask user where to save the results
-    output_file = filedialog.asksaveasfilename(
-        title="Save Machine Ranking Report",
-        defaultextension=".csv",
-        filetypes=[("CSV files", "*.csv")],
-        initialfile="machine_ranking.csv"
-    )
-
-    # If user has clicked Cancel
-    if not output_file:
-        raise SystemExit("No output location selected to store the file")
-
-    # Confirmation popup
-    messagebox.showinfo(
-        "Success",
-        f"Analysis completed successfully.\n\nFile saved to:\n{output_file}"
-    )
+    # Menu allowing to download, search or exit the program
+    show_menu(ranking, df)
 
 except Exception as e:
     messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")

@@ -1,7 +1,7 @@
 import pandas as pd
 from functions import *
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, simpledialog
 
 """
 Automated tests for the Machine Ranking Analysis Tool

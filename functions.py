@@ -1,6 +1,7 @@
 import pandas as pd
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, simpledialog
+import sys, os
 
 mr_machines = [("HS2", 47), ("HS3", 46), ("Pick&Place", 58), ("115D", 50), 
               ("Diana", 57), ("110WP", 23), ("INT", 19), ("75", 23), ("110", 50), 
@@ -317,4 +318,137 @@ def select_csv_file():
         title="Select AVANTE Data File",
         filetypes=[("CSV files", "*.csv")]
     )
+    # User clicked Cancel or X
+    if not file_path:
+        messagebox.showinfo("Select AVANTE Data File", """No file has been selected""")
+        raise SystemExit()
+
     return file_path
+
+def show_menu(ranking, output_df):
+    """_summary_
+
+    Args:
+        ranking (_type_): _description_
+        output_df (_type_): _description_
+    """
+
+    root = tk.Tk()
+    root.title("Machine Ranking Tool")
+
+    root.geometry("400x200")
+    root.resizable(False, False)
+
+    def search_die():
+
+        while True:
+
+            die = simpledialog.askstring(
+                "Search Die",
+                "Enter Die Number:"
+            )
+
+            # User pressed Cancel
+            if die is None:
+                return
+
+            try:
+                die = int(die)
+            except ValueError:
+                messagebox.showerror(
+                    "Invalid Input",
+                    "Please enter a valid die number."
+                )
+                continue
+
+            if die in ranking:
+
+                result = "\n".join(ranking[die])
+
+                messagebox.showinfo(
+                    f"Die {die}",
+                    result
+                )
+
+            else:
+
+                messagebox.showwarning(
+                    "Not Found",
+                    f"Die {die} was not found."
+                )
+
+    def save_csv():
+
+        output_file = filedialog.asksaveasfilename(
+            title="Save Ranking Report",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            initialfile="machine_ranking.csv"
+        )
+
+        if not output_file:
+            return
+
+        try:
+
+            with open(
+                output_file,
+                "w",
+                newline="",
+                encoding="utf-8"
+            ) as f:
+
+                f.write(
+                    '"Note: Extra time is compared against the fastest machine for 10,000 sheets."\n'
+                )
+
+                output_df.to_csv(
+                    f,
+                    index=False
+                )
+
+            messagebox.showinfo(
+                "Success",
+                "File saved successfully."
+            )
+
+        except PermissionError:
+
+            messagebox.showerror(
+                "File Open",
+                "Please close the file and try again."
+            )
+    def close_program():
+        root.destroy()
+        os._exit(0)
+
+    tk.Label(
+        root,
+        text="Machine Ranking Tool",
+        font=("Arial", 14, "bold")
+    ).pack(pady=15)
+
+    tk.Button(
+        root,
+        text="Search Die",
+        width=25,
+        command=search_die
+    ).pack(pady=5)
+
+    tk.Button(
+        root,
+        text="Download Ranking CSV",
+        width=25,
+        command=save_csv
+    ).pack(pady=5)
+
+    tk.Button(
+        root,
+        text="Exit",
+        width=25,
+        command=lambda: sys.exit()
+    ).pack(pady=5)
+
+    root.protocol("WM_DELETE_WINDOW", close_program)
+
+    root.mainloop()
