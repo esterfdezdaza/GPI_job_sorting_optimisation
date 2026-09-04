@@ -1,5 +1,6 @@
 import pandas as pd
 from functions import *
+from money_time import *
 from testing import *
 import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
@@ -61,7 +62,6 @@ Example:
 Press OK to choose the data file.
 
 """)
-
 # User clicked Cancel or X
 if not accepted:
     raise SystemExit()
@@ -75,6 +75,7 @@ try:
         
     try:
         # First checks that we can access the file 
+        start_date, end_date = get_report_period(file_path)
         df = pd.read_csv(
             file_path,
             skiprows=5,   # Skip the first 5 rows because they contain report information, not actual production data
@@ -106,11 +107,26 @@ try:
         messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
         raise SystemExit()
 
-
     # Extract production data from the raw AVANTE export
     # and organise it by die and machine
     data = get_data_from_csv(df)
     ranking = analyse_data(data)
+
+    # Calculate amount of money lost
+    jobs = get_work_orders(df)   
+
+    speed_lookup = build_speed_lookup(data)
+
+    hours_lost = calculate_total_lost_hours(jobs, speed_lookup)
+
+    print()
+    print("========== BUSINESS IMPACT ==========")
+    print(f"Period Analysed: "f"{start_date} to {end_date}")
+    print(f"Jobs analysed: {len(jobs)}")
+    print(f"Hours lost: {hours_lost:.2f}")
+    print(f"Money lost: £{hours_lost*129:.2f}")
+
+    print(f"12h - Shifts lost: "f"{hours_lost / 12:.2f}")
 
     # Print ranking results to the console for debugging
     print(ranking)
@@ -143,6 +159,7 @@ try:
 
     # Menu allowing to download, search or exit the program
     show_menu(ranking, df)
+    
 
 except Exception as e:
     messagebox.showinfo("File Read Error", f"{type(e).__name__}\n\n{e}")
