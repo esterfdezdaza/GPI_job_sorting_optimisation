@@ -324,3 +324,39 @@ def plot_machine_allocation(preferred_usage, actual_usage):
 
     plt.show()
 
+
+def create_kpi_dashboard(start_date, end_date, jobs, hours_lost, meaningful_hours_lost, money_lost):
+    fig = plt.figure(figsize=(12, 7), facecolor="white")
+
+    fig.suptitle("Potential Capacity Improvement Analysis", fontsize=20, fontweight="bold", y=0.95)
+
+    plt.figtext(0.5, 0.87, f"{start_date} → {end_date}", ha="center", fontsize=12)
+    cards = [
+        ("Works Orders", f"{jobs:,}"),
+        ("Recoverable Hours", f"{meaningful_hours_lost:.1f} h"),
+        ("Shift Days", f"{meaningful_hours_lost/12:.1f}"),
+        ("Financial Impact", f"£{money_lost:,.0f}")
+    ]
+
+    positions = [
+        [0.05, 0.60, 0.40, 0.25],
+        [0.55, 0.60, 0.40, 0.25],
+        [0.05, 0.25, 0.40, 0.25],
+        [0.55, 0.25, 0.40, 0.25]
+    ]
+
+    for (title, value), pos in zip(cards, positions):
+
+        ax = fig.add_axes(pos)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_facecolor("#F3F4F6")
+
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+
+        ax.text(0.5, 0.65, value, ha="center", va="center", fontsize=24, fontweight="bold")
+        ax.text(0.5, 0.25, title, ha="center", va="center", fontsize=12)
+
+    plt.savefig("business_impact_dashboard.png", dpi=300, bbox_inches="tight")
+    plt.close()

@@ -127,14 +127,14 @@ try:
     print("========== BUSINESS IMPACT ==========")
     print(f"Period Analysed: "f"{start_date} to {end_date}")
     print(f"Jobs analysed: {len(jobs)}")
-    print(f"Theoretical hours lost: " f"{hours_lost:.2f}")
-    print(f"Theoretical days lost (shift): "f"{hours_lost / 12:.2f}")
-    print(f"Meaningful hours lost "f"(>30 minutes/job): "f"{meaningful_hours_lost:.2f}")
-    print(f"Meaningful days lost (shift) "f"(>30 minutes/job): "f"{meaningful_hours_lost / 12:.2f}")
+    print(f"Theoretical recoverable capacity: " f"{hours_lost:.2f} hours")
+    print(f"Theoretical recoverable capacity: "f"{hours_lost / 24:.2f} days")
+    print(f"Meaningful recoverable capacity "f"(>30 minutes/job): "f"{meaningful_hours_lost:.2f} hours")
+    print(f"Meaningful recoverable capacity "f"(>30 minutes/job): "f"{meaningful_hours_lost / 24:.2f} days")
     # Data of the money per hour (Machine Gluing Costs- includes lost time /break downs machine - 193) in finishing taken from SOP 407 - Supplier Claim
-    print(f"Money lost total time: £{hours_lost*193:.2f}")
-    print(f"Money lost meaningful time: £{meaningful_hours_lost*193:.2f}")
-    print(f"12h - Shifts lost: "f"{hours_lost / 12:.2f}")
+    print(f"Money recoverable theoretical capacity: £{hours_lost*193:.2f}")
+    print(f"Money recoverable meaningful capacity: £{meaningful_hours_lost*193:.2f}")
+    print(f"12h - Shifts recoverable: "f"{hours_lost / 12:.2f}")
 
     print()
     print("========== MACHINE DEMAND ==========")
@@ -150,9 +150,11 @@ try:
     all_jobs = len(jobs)
     for machine, count in preferred_usage.items():
         percentage = round(count / all_jobs * 100, 1)
-        print(f"{machine}: " f"{count} jobs " f"({percentage}%)")   
+        print(f"{machine}: " f"{count} jobs " f"({percentage}%)")  
 
+    create_kpi_dashboard(start_date, end_date, len(jobs), hours_lost, meaningful_hours_lost, meaningful_hours_lost*193)
     plot_machine_allocation(preferred_usage, actual_usage)
+
 
     # Print ranking results to the console for debugging
     print(ranking)
