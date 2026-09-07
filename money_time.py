@@ -326,7 +326,7 @@ def plot_machine_allocation(preferred_usage, actual_usage):
 
 
 def create_kpi_dashboard(start_date, end_date, jobs, hours_lost, meaningful_hours_lost, money_lost):
-    fig = plt.figure(figsize=(12, 7), facecolor="white")
+    fig = plt.figure(figsize=(12, 7), facecolor="#E8F5E9")
 
     fig.suptitle("Potential Capacity Improvement Analysis", fontsize=20, fontweight="bold", y=0.95)
 
@@ -350,7 +350,7 @@ def create_kpi_dashboard(start_date, end_date, jobs, hours_lost, meaningful_hour
         ax = fig.add_axes(pos)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_facecolor("#F3F4F6")
+        ax.set_facecolor("#7BC67B") # Medium green
 
         for spine in ax.spines.values():
             spine.set_visible(False)
