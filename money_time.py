@@ -1,6 +1,7 @@
 import pandas as pd
 from functions import *
 import re
+import matplotlib.pyplot as plt
 
 def build_speed_lookup(data):
     """ Creates a lookup table containing the average speed achieve by each machine for every die.
@@ -37,25 +38,34 @@ def build_speed_lookup(data):
     return lookup
 
 def calculate_total_lost_hours(work_orders, speed_lookup):
-    """ Calculates the total production time lost due to jobs being run on machines that are not the preferred machine for a die.
+    """
+    Calculates the total theoretical and meaningful hours lost
+    due to jobs being run on non-preferred machines.
 
-    For each Works Order:
-    - The actual running hours are taken from the AVANTE summary row.
-    - The fastest machine speed available for that die is identified.
-    - The theoretical running time on the fastest machine is calculated.
-    - The difference between actual and theoretical time is treated as lost production time.
-    
+    Meaningful losses are defined as jobs where moving to the
+    preferred machine would save at least 30 minutes.
+
     Args:
-        work_orders (list[dict]): List of Works Orders extracted from the AVANTE file
-        speed_lookup (dict): Dictionary containing average machine speeds by die
+        work_orders (list):
+            List of works order dictionaries.
+
+        speed_lookup (dict):
+            Dictionary containing machine speeds by die.
 
     Returns:
-        float: Total estimated hours lost
+        tuple:
+            (
+                total_lost_hours,
+                meaningful_lost_hours
+            )
     """
-    total_lost_hours = 0
-    best_speed = None
 
-    # Analyse each Works Order individually
+    total_lost_hours = 0
+    meaningful_lost_hours = 0
+
+    # 30 minutes
+    MIN_TIME_SAVED = 0.5
+
     for job in work_orders:
 
         die = job["die"]
@@ -64,51 +74,58 @@ def calculate_total_lost_hours(work_orders, speed_lookup):
         qty = job["qty"]
         actual_hours = job["hours"]
 
-
-        # Skips jobs where no ranking information exists
+        # Skip jobs for dies not present in rankings
         if die not in speed_lookup:
             continue
 
-        # Skips jobs where no machine is unavailable in the lookup
+        # Skip machines not present in rankings
         if machine not in speed_lookup[die]:
             continue
-        
-        # Identify the fastest average speed available for this die
+
+        # Fastest machine speed for this 
         best_speed = max(speed_lookup[die].values())
 
-        # Skip jobs already run on the fastest machine
+        # Speed of the machine that actually ran the job
         actual_machine_speed = speed_lookup[die][machine]
 
-        # Debug output
-        print(die, wo, machine, qty, actual_hours, best_speed, actual_machine_speed)
-
-        # Ignore jobs that already ran on the fastest machine
+        # Ignore jobs already run on the preferred machine
         if actual_machine_speed == best_speed:
             continue
-        
-        # Prevents division-by-zero errors
-        if best_speed is None or best_speed <= 0:
+
+        # Prevent divide-by-zero errors
+        if best_speed <= 0:
             continue
 
-        # Calculate how long the job would have taken on the fastest machine
+        # Time that the preferred machine would have needed
         optimal_hours = qty / best_speed
 
-        # Calculate the additional time consumed
+        # Additional time incurred
         lost_hours = actual_hours - optimal_hours
 
-        # Debug output
-        print(
-            "actual =", actual_hours,
-            "optimal =", optimal_hours,
-            "lost =", lost_hours
-        )
-
-        # Only count genuine losses
+        # Only count real losses
         if lost_hours > 0:
-            total_lost_hours += lost_hours
-            print(total_lost_hours)
 
-    return round(total_lost_hours, 2)
+            total_lost_hours += lost_hours
+
+            # Only count significant opportunities
+            if lost_hours >= MIN_TIME_SAVED:
+                meaningful_lost_hours += lost_hours
+            """
+            # Debug output
+            print(
+                f"WO={wo}",
+                f"Die={die}",
+                f"Machine={machine}",
+                f"Qty={qty}",
+                f"Actual={actual_hours:.2f}",
+                f"Optimal={optimal_hours:.2f}",
+                f"Lost={lost_hours:.2f}"
+            )"""
+
+    return (
+        round(total_lost_hours, 2),
+        round(meaningful_lost_hours, 2)
+    )
 
 def get_work_orders(df):
     """Extracts completed Works Orders from AVANTE report.
@@ -202,3 +219,108 @@ def get_report_period(file_path):
         return match.group(1), match.group(2)
 
     return "Unknown", "Unknown"
+
+def calculate_machine_demand(work_orders, speed_lookup):
+    """
+    Calculates how many jobs would ideally be assigned
+    to each machine.
+
+    Returns:
+        dict:
+            {
+                machine: number_of_jobs
+            }
+    """
+
+    preferred_machine_count = {}
+
+    for job in work_orders:
+
+        die = job["die"]
+
+        if die not in speed_lookup:
+            continue
+
+        # Find the best machine for this die
+        best_machine = max(
+            speed_lookup[die],
+            key=speed_lookup[die].get
+        )
+
+        if best_machine not in preferred_machine_count:
+            preferred_machine_count[best_machine] = 0
+
+        preferred_machine_count[best_machine] += 1
+
+    return dict(
+        sorted(
+            preferred_machine_count.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+    )
+
+def calculate_actual_machine_usage(work_orders):
+    """
+    Counts how many jobs actually ran on each machine.
+    """
+
+    actual_usage = {}
+
+    for job in work_orders:
+
+        machine = job["machine"]
+
+        if machine not in actual_usage:
+            actual_usage[machine] = 0
+
+        actual_usage[machine] += 1
+
+    return dict(
+        sorted(
+            actual_usage.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+    )
+
+def plot_machine_allocation(preferred_usage, actual_usage):
+    """
+    Creates a comparison chart showing:
+
+    - How many jobs ideally should have run on each machine.
+    - How many jobs actually ran on each machine.
+    """
+
+    # Get all machines appearing in either dictionary
+    machines = sorted(set(preferred_usage.keys()) | set(actual_usage.keys()))
+
+    # Build dataframe
+    df_plot = pd.DataFrame({
+        "Machine": machines,
+        "Preferred": [
+            preferred_usage.get(machine, 0)
+            for machine in machines],
+        "Actual": [
+            actual_usage.get(machine, 0)
+            for machine in machines]
+    })
+
+    # Sort by preferred demand
+    df_plot = df_plot.sort_values(by="Preferred", ascending=False)
+
+    # Plot
+    ax = df_plot.plot(x="Machine", y=["Preferred", "Actual"], kind="bar", figsize=(12, 6))
+
+    ax.set_title("Preferred vs Actual Machine Allocation")
+
+    ax.set_ylabel("Number of Works Orders")
+
+    ax.set_xlabel("Machine")
+
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
+
+    plt.show()
+

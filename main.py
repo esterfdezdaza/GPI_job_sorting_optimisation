@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 import ctypes
 import sys
+import matplotlib.pyplot as plt
 
 # Avoid having more than one file open at the same time
 mutex = ctypes.windll.kernel32.CreateMutexW(
@@ -117,16 +118,39 @@ try:
 
     speed_lookup = build_speed_lookup(data)
 
-    hours_lost = calculate_total_lost_hours(jobs, speed_lookup)
+    hours_lost, meaningful_hours_lost = (calculate_total_lost_hours(jobs,speed_lookup))
+    preferred_usage = calculate_machine_demand(jobs, speed_lookup)
+    actual_usage = calculate_actual_machine_usage(jobs)
+
 
     print()
     print("========== BUSINESS IMPACT ==========")
     print(f"Period Analysed: "f"{start_date} to {end_date}")
     print(f"Jobs analysed: {len(jobs)}")
-    print(f"Hours lost: {hours_lost:.2f}")
+    print(f"Theoretical hours lost: " f"{hours_lost:.2f}")
+    print(f"Theoretical days lost (shift): "f"{hours_lost / 12:.2f}")
+    print(f"Meaningful hours lost "f"(>30 minutes/job): "f"{meaningful_hours_lost:.2f}")
+    print(f"Meaningful days lost (shift) "f"(>30 minutes/job): "f"{meaningful_hours_lost / 12:.2f}")
     print(f"Money lost: £{hours_lost*129:.2f}")
-
     print(f"12h - Shifts lost: "f"{hours_lost / 12:.2f}")
+
+    print()
+    print("========== MACHINE DEMAND ==========")
+    print("\nPreferred Allocation")
+    for machine, count in preferred_usage.items():
+        print(f"{machine}: {count} jobs")
+    print("\nActual Allocation")
+    for machine, count in actual_usage.items():
+        print(f"{machine}: {count} jobs")
+
+    print()
+    print("========== BOTTLENECK ANALYSIS ==========")
+    all_jobs = len(jobs)
+    for machine, count in preferred_usage.items():
+        percentage = round(count / all_jobs * 100, 1)
+        print(f"{machine}: " f"{count} jobs " f"({percentage}%)")   
+
+    plot_machine_allocation(preferred_usage, actual_usage)
 
     # Print ranking results to the console for debugging
     print(ranking)
