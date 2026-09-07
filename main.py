@@ -131,7 +131,9 @@ try:
     print(f"Theoretical days lost (shift): "f"{hours_lost / 12:.2f}")
     print(f"Meaningful hours lost "f"(>30 minutes/job): "f"{meaningful_hours_lost:.2f}")
     print(f"Meaningful days lost (shift) "f"(>30 minutes/job): "f"{meaningful_hours_lost / 12:.2f}")
-    print(f"Money lost: £{hours_lost*129:.2f}")
+    # Data of the money per hour (Machine Gluing Costs- includes lost time /break downs machine - 193) in finishing taken from SOP 407 - Supplier Claim
+    print(f"Money lost total time: £{hours_lost*193:.2f}")
+    print(f"Money lost meaningful time: £{meaningful_hours_lost*193:.2f}")
     print(f"12h - Shifts lost: "f"{hours_lost / 12:.2f}")
 
     print()
