@@ -83,7 +83,11 @@ def calculate_total_lost_hours(work_orders, speed_lookup):
             continue
 
         # Fastest machine speed for this 
-        best_speed = max(speed_lookup[die].values())
+        machine_speeds = speed_lookup.get(die, {})
+
+        if len(machine_speeds) == 0:
+            continue
+        best_speed = max(machine_speeds.values())
 
         # Speed of the machine that actually ran the job
         actual_machine_speed = speed_lookup[die][machine]
@@ -242,6 +246,13 @@ def calculate_machine_demand(work_orders, speed_lookup):
             continue
 
         # Find the best machine for this die
+        if die not in speed_lookup:
+            continue
+
+        if not speed_lookup[die]:
+            print(f"No speed data for die {die}")
+            continue
+
         best_machine = max(
             speed_lookup[die],
             key=speed_lookup[die].get
@@ -263,6 +274,12 @@ def calculate_machine_demand(work_orders, speed_lookup):
 def calculate_actual_machine_usage(work_orders):
     """
     Counts how many jobs actually ran on each machine.
+
+     Returns:
+            dict:
+                {
+                    machine: number_of_jobs
+                }
     """
 
     actual_usage = {}
@@ -325,7 +342,29 @@ def plot_machine_allocation(preferred_usage, actual_usage):
     plt.show()
 
 
-def create_kpi_dashboard(start_date, end_date, jobs, hours_lost, meaningful_hours_lost, money_lost):
+def create_kpi_dashboard(start_date, end_date, jobs, meaningful_hours_lost, money_lost):
+    """
+    Generate a KPI dashboard summarizing potential capacity improvement metrics.
+
+    Creates a four-card business impact dashboard displaying:
+    - Total work orders analysed
+    - Recoverable hours identified
+    - Equivalent shift days recovered (based on 12-hour shifts)
+    - Estimated financial impact
+
+    The dashboard is saved as 'business_impact_dashboard.png'.
+
+    Args:
+        start_date (str): Analysis start date.
+        end_date (str): Analysis end date.
+        jobs (int): Number of work orders included in the analysis.
+        hours_lost (float): Total hours lost across all downtime events.
+        meaningful_hours_lost (float): Recoverable or actionable hours lost.
+        money_lost (float): Estimated financial value of recoverable hours.
+
+    Returns:
+        None
+    """
     fig = plt.figure(figsize=(12, 7), facecolor="#E8F5E9")
 
     fig.suptitle("Potential Capacity Improvement Analysis", fontsize=20, fontweight="bold", y=0.95)

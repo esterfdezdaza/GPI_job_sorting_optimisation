@@ -206,7 +206,6 @@ def get_data_from_csv(df):
 
     return dies
 
-
 def hours_to_hm(decimal_hours):
     """
     Converts a decimal hour value into a human-readable hours and minutes
@@ -543,4 +542,3 @@ def show_menu(ranking, output_df):
     root.protocol("WM_DELETE_WINDOW", close_program)
 
     root.mainloop()
-
